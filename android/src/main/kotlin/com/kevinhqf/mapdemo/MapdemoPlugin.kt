@@ -18,12 +18,13 @@ open class MapdemoPlugin : FlutterPlugin, ActivityAware {
 
     companion object {
 
+        @JvmStatic
         fun registerWith(registrar: PluginRegistry.Registrar) {
             val activity = registrar.activity() ?: return
 
             if (activity is LifecycleOwner) {
                 registrar.platformViewRegistry().registerViewFactory(
-                        NAVI_VIEW_TYPE,
+                        NAV_VIEW_TYPE,
                         AMapNavViewFactory(registrar.messenger(), object : LifecycleProvider {
                             override fun getLifecycle(): Lifecycle {
                                 return activity.lifecycle
@@ -32,7 +33,7 @@ open class MapdemoPlugin : FlutterPlugin, ActivityAware {
                 )
             }else{
                 registrar.platformViewRegistry().registerViewFactory(
-                        NAVI_VIEW_TYPE,
+                        NAV_VIEW_TYPE,
                         AMapNavViewFactory(registrar.messenger(), ProxyLifecycleProvider(activity))
                 )
             }
@@ -43,7 +44,7 @@ open class MapdemoPlugin : FlutterPlugin, ActivityAware {
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         pluginBinding = binding
-        binding.platformViewRegistry.registerViewFactory(NAVI_VIEW_TYPE,
+        binding.platformViewRegistry.registerViewFactory(NAV_VIEW_TYPE,
                 AMapNavViewFactory(binding.binaryMessenger, object : LifecycleProvider {
                     override fun getLifecycle(): Lifecycle {
                         return lifecycle!!

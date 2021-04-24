@@ -23,19 +23,23 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
-
+  int _time=0;
+  int _distance=0;
   @override
   void initState() {
     super.initState();
-    initPlatformState();
     _checkPermissions();
+    MapDemo.methodChannel.setMethodCallHandler(platformCallHandler);
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      MapDemo.startNavi( 22.819884,113.284958);
+    });
   }
 
   @override
   void reassemble() {
     super.reassemble();
     _checkPermissions();
+
   }
 
   void _checkPermissions() async {
@@ -46,24 +50,15 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    try {
-      platformVersion = "0"; //await Mapdemo.platformVersion;
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
+  Future<dynamic> platformCallHandler(MethodCall call)async{
+    switch(call.method){
+      case "onNaviInfoUpdate":
+       setState(() {
+         _distance = call.arguments['distance'];
+         _time = call.arguments['time'];
+       });
+        break;
     }
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-
-    setState(() {
-      _platformVersion = platformVersion;
-    });
   }
 
 
@@ -77,7 +72,7 @@ class _MyAppState extends State<MyApp> {
       home: Scaffold(
           body: Center(
         child: Column(
-          children: [topInfo, map, bottom],
+          children: [topInfo(), map, bottom],
         ),
       )),
     );
@@ -90,7 +85,7 @@ class _MyAppState extends State<MyApp> {
   );
 
   Widget bottom = GestureDetector(
-    onTap: Mapdemo.startNavi,
+    onTap: (){},
     child: Container(
       color: Colors.lightBlueAccent,
       child: Center(
@@ -103,30 +98,33 @@ class _MyAppState extends State<MyApp> {
     ),
   );
 
-  Widget topInfo = Container(
-      child: Container(
-    color: Colors.black,
-    height: 45,
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        Container(
-          child: Center(
-            child: Text(
-              "距离起点0公里",
-              style: TextStyle(color: Colors.white),
-            ),
+  Widget topInfo(){
+    return Container(
+        child: Container(
+          color: Colors.black,
+          height: 45,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Container(
+                child: Center(
+                  child: Text(
+                    '距离终点$_distance公里',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+              Container(
+                child: Center(
+                  child: Text(
+                    "预计用时$_time分钟",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-        Container(
-          child: Center(
-            child: Text(
-              "预计用时0分钟",
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ),
-      ],
-    ),
-  ));
+        ));
+  }
+
 }

@@ -18,6 +18,6 @@ void main() {
   });
 
   test('getPlatformVersion', () async {
-    expect(await Mapdemo.platformVersion, '42');
+    expect(await MapDemo.platformVersion, '42');
   });
 }

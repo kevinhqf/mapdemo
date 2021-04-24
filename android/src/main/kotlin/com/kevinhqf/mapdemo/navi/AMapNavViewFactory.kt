@@ -14,6 +14,8 @@ class AMapNavViewFactory(val binaryMessenger: BinaryMessenger,val lifecycleProvi
     override fun create(context: Context, viewId: Int, args: Any?): PlatformView {
         val options = AMapNaviViewOptions()
         options.isSettingMenuEnabled = false
+        options.isAfterRouteAutoGray = true
+        options.isAutoLockCar=true
         return AMapNavView(viewId,context,binaryMessenger,lifecycleProvider, options)
     }
 }

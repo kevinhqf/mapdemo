@@ -11,66 +11,73 @@ import com.amap.api.navi.AMapNaviView
 import com.amap.api.navi.AMapNaviViewOptions
 import com.amap.api.navi.enums.NaviType
 import com.amap.api.navi.model.AMapCalcRouteResult
+import com.amap.api.navi.model.NaviInfo
 import com.amap.api.navi.model.NaviLatLng
-import com.kevinhqf.mapdemo.NAVI_CHANNEL
+import com.amap.api.navi.view.NextTurnTipView
+import com.kevinhqf.mapdemo.NAV_EVENT_CHANNEL
+import com.kevinhqf.mapdemo.NAV_METHOD_CHANNEL
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.BinaryMessenger
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.platform.PlatformView
 
-public class AMapNavView(id: Int, val context: Context, binaryMessenger: BinaryMessenger, lifecycleProvider: LifecycleProvider, options: AMapNaviViewOptions) : DefaultLifecycleObserver, ActivityPluginBinding.OnSaveInstanceStateListener, MethodChannel.MethodCallHandler, PlatformView {
+public class AMapNavView(id: Int, val context: Context, binaryMessenger: BinaryMessenger, lifecycleProvider: LifecycleProvider, options: AMapNaviViewOptions) : DefaultLifecycleObserver, ActivityPluginBinding.OnSaveInstanceStateListener, MethodChannel.MethodCallHandler, PlatformView{
 
     var methodChannel: MethodChannel? = null
+    var eventChannel:EventChannel?=null
     var mapView: AMapNaviView? = null
     var mapNavi: AMapNavi? = null
     var disposed = false
 
-
-    protected var mEndLatlng = NaviLatLng(22.819884, 113.284958)
-
-    protected val sList: ArrayList<NaviLatLng> = ArrayList()
-    protected val eList: ArrayList<NaviLatLng> = ArrayList()
-    protected var mWayPointList: ArrayList<NaviLatLng> = ArrayList()
-
     init {
-        //todo
-        methodChannel = MethodChannel(binaryMessenger, NAVI_CHANNEL)
+        methodChannel = MethodChannel(binaryMessenger, NAV_METHOD_CHANNEL)
         methodChannel?.setMethodCallHandler(this)
-        mapView = AMapNaviView(context,options)
+        eventChannel = EventChannel(binaryMessenger, NAV_EVENT_CHANNEL)
 
+
+        mapView = AMapNaviView(context, options)
         mapNavi = AMapNavi.getInstance(context)
         lifecycleProvider.getLifecycle().addObserver(this)
 
-        mapNavi?.setEmulatorNaviSpeed(75)
-
-        eList.add(mEndLatlng)
         mapView?.setAMapNaviViewListener(object : MapNaviViewListener() {})
         mapNavi?.addAMapNaviListener(object : MapNaviListener() {
-            override fun onInitNaviSuccess() {
-                super.onInitNaviSuccess()
-                //Toast.makeText(context,"initnav",Toast.LENGTH_SHORT).show()
-            }
+
 
             override fun onCalculateRouteSuccess(p0: AMapCalcRouteResult?) {
                 super.onCalculateRouteSuccess(p0)
                 mapNavi?.startNavi(NaviType.EMULATOR)
             }
 
-            override fun onStartNavi(p0: Int) {
-                super.onStartNavi(p0)
-                Toast.makeText(context,"start",Toast.LENGTH_SHORT).show()
-            }
 
             override fun onCalculateRouteFailure(p0: AMapCalcRouteResult?) {
                 super.onCalculateRouteFailure(p0)
-                Toast.makeText(context,"failure:${p0?.errorDescription}",Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "failure:${p0?.errorDescription}", Toast.LENGTH_SHORT).show()
             }
+
+            override fun onNaviInfoUpdate(info: NaviInfo?) {
+                super.onNaviInfoUpdate(info)
+                info?.let {
+                    val arguments= mutableMapOf<String,Int>()
+                    arguments["distance"] = it.pathRetainDistance/1000
+                    arguments["time"] = it.pathRetainTime/60
+                    methodChannel?.invokeMethod("onNaviInfoUpdate",arguments)
+                }
+                //Log.e("update","distance="+info?.pathRetainDistance)
+                //Log.e("update","time="+info?.pathRetainTime)
+            }
+
+
 
         })
     }
 
-    fun initNav(){
+    private fun startNav(lat: Double, lng: Double) {
+        val mEndLatlng = NaviLatLng(lat, lng)
+
+        val eList: ArrayList<NaviLatLng> = ArrayList()
+        eList.add(mEndLatlng)
         //Toast.makeText(context,"press",Toast.LENGTH_SHORT).show()
 
         var strategy = 0
@@ -80,6 +87,7 @@ public class AMapNavView(id: Int, val context: Context, binaryMessenger: BinaryM
         } catch (e: Exception) {
             e.printStackTrace()
         }
+        mapNavi?.setEmulatorNaviSpeed(75)
         mapNavi?.calculateDriveRoute(eList, null, strategy)
     }
 
@@ -151,8 +159,12 @@ public class AMapNavView(id: Int, val context: Context, binaryMessenger: BinaryM
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
-        if (call.method == "startNav") {
-            initNav()
+        when(call.method){
+            "startNav" -> {
+                val lat = call.argument<Double>("lat") ?: 22.819884
+                val lng = call.argument<Double>("lng") ?: 113.284958
+                startNav(lat, lng)
+            }
         }
     }
 
@@ -170,4 +182,6 @@ public class AMapNavView(id: Int, val context: Context, binaryMessenger: BinaryM
             e.printStackTrace()
         }
     }
+
+
 }
