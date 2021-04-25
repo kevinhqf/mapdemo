@@ -2,7 +2,7 @@
 
 A new Flutter plugin.
 
-![截图](http://106.53.237.34/flutter_cap.png)
+![截图](https://ftp.bmp.ovh/imgs/2021/04/b0cb5b388d3abf5a.png)
 
 ## Getting Started
 
