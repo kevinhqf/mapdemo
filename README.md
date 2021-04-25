@@ -2,6 +2,8 @@
 
 A new Flutter plugin.
 
+![截图](http://106.53.237.34/flutter_cap.png)
+
 ## Getting Started
 
 This project is a starting point for a Flutter
